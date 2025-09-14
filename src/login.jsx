@@ -6,21 +6,17 @@ export default function Login({ onLogin }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState(null);
 
   const handleLogin = (e) => {
     e.preventDefault();
-
-    
     const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    
     const foundUser = users.find(
       (user) => user.email === email && user.password === password
     );
 
     if (foundUser) {
-      
       if (!foundUser.id) {
         foundUser.id = Date.now().toString();
         const updatedUsers = users.map((u) =>
@@ -29,7 +25,6 @@ export default function Login({ onLogin }) {
         localStorage.setItem("users", JSON.stringify(updatedUsers));
       }
 
-      
       const loggedInUser = {
         id: foundUser.id,
         name: foundUser.name,
@@ -37,9 +32,7 @@ export default function Login({ onLogin }) {
       };
       localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
 
-      
       onLogin(loggedInUser);
-
       setAlert({ type: "success", message: `Welcome, ${foundUser.name}!` });
 
       setTimeout(() => {
@@ -82,14 +75,34 @@ export default function Login({ onLogin }) {
             className="p-2 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="p-2 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
-            required
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400 pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-700"
+            >
+              {showPassword ? "👁️" : "🙈"}
+            </button>
+          </div>
+
+          <div className="text-right">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-purple-700 hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
           <motion.button
             type="submit"
             whileHover={{ scale: 1.05 }}

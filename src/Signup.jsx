@@ -7,14 +7,13 @@ export default function Signup({ onSignup }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState(null);
 
   const handleSignup = (e) => {
     e.preventDefault();
-
     const users = JSON.parse(localStorage.getItem("users")) || [];
 
-    
     const existingUser = users.find((user) => user.email === email);
     if (existingUser) {
       setAlert({
@@ -24,12 +23,10 @@ export default function Signup({ onSignup }) {
       return;
     }
 
-
     const newUser = { name, email, password };
     users.push(newUser);
     localStorage.setItem("users", JSON.stringify(users));
 
-    
     onSignup({ name, email });
     localStorage.setItem("loggedInUser", JSON.stringify({ name, email }));
 
@@ -80,14 +77,25 @@ export default function Signup({ onSignup }) {
             className="p-2 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="p-2 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400"
-            required
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-400 pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-700"
+            >
+              {showPassword ? "👁️" : "🙈"}
+            </button>
+          </div>
+
           <motion.button
             type="submit"
             whileHover={{ scale: 1.05 }}
