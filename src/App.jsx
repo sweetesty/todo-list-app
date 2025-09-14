@@ -1,54 +1,148 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import AllTasks from "./AllTask"
-import CompletedTasks from "./CompletedTask"
-import AddTask from "./AddTask"
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+  Link,
+  Navigate,
+} from "react-router-dom";
 
-function App() {
+import HomePage from "./HomePage";
+import Login from "./login";
+import Signup from "./Signup";
+import AllTasks from "./AllTask";
+import AddTask from "./AddTask";
+import CompletedTasks from "./CompletedTask";
+import NotFound from "./NotFound";
+import Footer from "./Footer";
+
+
+function Navbar({ userName }) {
   return (
-    <Router>
-      <div className="min-h-screen bg-pink-50 flex flex-col">
-        {/* Header / Navigation */}
-        <header className="bg-pink-600 text-white p-4 flex flex-col sm:flex-row justify-between items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-0">💖 My Bucket List 💖</h1>
-          <nav className="flex flex-wrap justify-center gap-2">
-            <Link
-              to="/"
-              className="bg-pink-300 hover:bg-pink-400 text-pink-900 font-bold px-3 py-1 rounded"
-            >
-              All Tasks
-            </Link>
-            <Link
-              to="/add"
-              className="bg-pink-300 hover:bg-pink-400 text-pink-900 font-bold px-3 py-1 rounded"
-            >
-              Add Task
-            </Link>
-            <Link
-              to="/completed"
-              className="bg-pink-300 hover:bg-pink-400 text-pink-900 font-bold px-3 py-1 rounded"
-            >
-              Completed Tasks
-            </Link>
-          </nav>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-grow p-4 md:p-8">
-          <Routes>
-            <Route path="/" element={<AllTasks />} />
-            <Route path="/add" element={<AddTask />} />
-            <Route path="/completed" element={<CompletedTasks />} />
-          </Routes>
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-pink-600 text-white text-center p-4">
-          Made with 💖 by Me
-        </footer>
-      </div>
-    </Router>
+    <header className="bg-purple-700 text-white p-4 flex justify-between items-center">
+      <h1 className="text-2xl font-bold">
+        {userName ? `${userName}'s Tasks` : "Task Manager"}
+      </h1>
+      <nav className="flex gap-4">
+        <Link className="hover:underline" to="/all">
+          All Tasks
+        </Link>
+        <Link className="hover:underline" to="/add">
+          Add Task
+        </Link>
+        <Link className="hover:underline" to="/completed">
+          Completed
+        </Link>
+      </nav>
+    </header>
   );
 }
 
-export default App;
+
+function AppContent() {
+  const [userId, setUserId] = useState(null);
+  const [userName, setUserName] = useState("");
+  const location = useLocation();
+
+  
+  useEffect(() => {
+    const savedUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (savedUser) {
+      setUserId(savedUser.id);
+      setUserName(savedUser.name);
+    }
+  }, []);
+
+  
+  useEffect(() => {
+    if (userId) {
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify({ id: userId, name: userName })
+      );
+    } else {
+      localStorage.removeItem("currentUser");
+    }
+  }, [userId, userName]);
+
+  
+  const hideNavbar =
+    location.pathname === "/" ||
+    location.pathname === "/login" ||
+    location.pathname === "/signup";
+
+  return (
+    <div>
+      {!hideNavbar && <Navbar userName={userName} />}
+
+      <main className="flex-grow p-4 md:p-8">
+        <Routes>
+      
+          <Route path="/" element={<HomePage />} />
+
+          
+          <Route
+            path="/login"
+            element={
+              <Login
+                onLogin={(user) => {
+                  setUserId(user.email);
+                  setUserName(user.name);
+                }}
+              />
+            }
+          />
+
+        
+          <Route
+            path="/signup"
+            element={
+              <Signup
+                onSignup={(user) => {
+                  setUserId(user.email);
+                  setUserName(user.name);
+                }}
+              />
+            }
+          />
+
+          
+          {userId ? (
+            <>
+              <Route path="/all" element={<AllTasks userId={userId} />} />
+              <Route path="/add" element={<AddTask userId={userId} />} />
+              <Route
+                path="/completed"
+                element={<CompletedTasks userId={userId} />}
+              />
+            </>
+          ) : (
+            <>
+            
+              <Route path="/all" element={<Navigate to="/login" replace />} />
+              <Route path="/add" element={<Navigate to="/login" replace />} />
+              <Route
+                path="/completed"
+                element={<Navigate to="/login" replace />}
+              />
+            </>
+          )}
+
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+
+export default function App() {
+  return (
+    <Router basename="/todo-list-app">
+      <AppContent />
+    </Router>
+  );
+}

@@ -1,55 +1,73 @@
-import React, { useState, useEffect } from "react";
-import initialTasks from "./bucket.json"
 
-function  AddTask () {
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem("myBucketList");
-    return saved ? JSON.parse(saved) : initialTasks;
-  });
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+
+function AddTask({ userId }) {
+  const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  const currentUserId = userId || storedUser?.id;
+
+  const storageKey = `tasks_${currentUserId}`;
   const [text, setText] = useState("");
   const [category, setCategory] = useState("General");
 
-  useEffect(() => {
-    localStorage.setItem("myBucketList", JSON.stringify(tasks));
-  }, [tasks]);
-
   const addTask = () => {
-    if (!text) return;
+    if (!text.trim()) return;
     const newTask = { text, category, done: false };
-    setTasks([...tasks, newTask]);
+    const existingTasks = JSON.parse(localStorage.getItem(storageKey)) || [];
+    const updatedTasks = [...existingTasks, newTask];
+    localStorage.setItem(storageKey, JSON.stringify(updatedTasks));
+    window.dispatchEvent(new Event("tasksUpdated"));
     setText("");
     setCategory("General");
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <h2 className="text-2xl md:text-3xl font-bold text-pink-600 mb-5">Add New Task</h2>
-      <div className="w-full max-w-md flex flex-col space-y-3">
-        <input
+    <div className="min-h-screen w-full flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 bg-gradient-to-br from-purple-100 via-purple-200 to-purple-300">
+      <h2 className="text-2xl sm:text-3xl font-bold text-purple-800 mb-5 text-center">
+        Add New Task
+      </h2>
+
+      <motion.div
+        className="w-full sm:w-11/12 md:w-3/4 lg:w-1/2 flex flex-col gap-3"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Task name"
-          className="p-2 rounded border border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-400"
+          className="flex-1 w-full p-2 sm:p-3 rounded-lg border border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          whileFocus={{ scale: 1.02, borderColor: "#7C3AED" }}
         />
-        <select
+
+        <motion.select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="p-2 rounded border border-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-400"
+          className="flex-1 w-full p-2 sm:p-3 rounded-lg border border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          whileFocus={{ scale: 1.02, borderColor: "#7C3AED" }}
         >
-          {["Healing", "Fun", "Self-Love", "Growth", "Adventure", "General"].map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        <button
+          {["Healing", "Fun", "Self Love", "Growth", "Adventure", "General"].map(
+            (cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            )
+          )}
+        </motion.select>
+
+        <motion.button
           onClick={addTask}
-          className="bg-pink-500 text-white font-bold p-2 rounded hover:bg-pink-600"
+          className="flex-1 w-full bg-purple-700 text-white font-bold p-2 sm:p-3 rounded-lg hover:bg-purple-600 shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           Add Task
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   );
-};
+}
 
 export default AddTask;

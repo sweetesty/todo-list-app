@@ -1,33 +1,109 @@
-import React, { useState, useEffect } from "react";
-import initialTasks from "./bucket.json"
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const CompletedTasks = () => {
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem("myBucketList");
-    return saved ? JSON.parse(saved) : [];
-  });
+export default function CompletedTasks({ userId }) {
+  
+  const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  const currentUserId = userId || storedUser?.id;
+
+  const [tasks, setTasks] = useState([]);
+  const key = `tasks_${currentUserId}`;
+
+  const loadTasks = () => {
+    const storedTasks = JSON.parse(localStorage.getItem(key)) || [];
+    setTasks(storedTasks);
+  };
+
+  const saveTasks = (updated) => {
+    setTasks(updated);
+    localStorage.setItem(key, JSON.stringify(updated));
+  };
 
   useEffect(() => {
-    localStorage.setItem("myBucketList", JSON.stringify(tasks));
-  }, [tasks]);
+    loadTasks();
+    const handleStorageChange = () => loadTasks();
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [currentUserId]);
+
+  const restoreTask = (index) => {
+    const updated = [...tasks];
+    updated[index].done = false;
+    saveTasks(updated);
+  };
+
+  const deleteTask = (index) => {
+    const updated = tasks.filter((_, i) => i !== index);
+    saveTasks(updated);
+  };
+
+  const completedTasks = tasks.filter((task) => task.done);
 
   return (
-    <div className="flex flex-col items-center">
-      <h2 className="text-2xl font-bold text-pink-600 mb-5">Completed Tasks</h2>
-      <ul className="w-full max-w-md">
-        {tasks.filter(task => task.done).map((task, index) => (
-          <li
-            key={index}
-            className="flex justify-between items-center mb-3 p-3 rounded bg-pink-300"
-          >
-            <span className="line-through text-pink-50 font-bold">
-              [{task.category}] {task.text}
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div className="max-w-4xl mx-auto bg-gradient-to-br from-purple-100 via-purple-200 to-purple-300 flex flex-col items-center p-4 md:p-8 min-h-screen rounded-lg">
+      <h2 className="text-2xl font-bold mb-6 text-purple-800 text-center">
+        Completed Tasks
+      </h2>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="completed-list"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+          className="grid gap-4 w-full"
+        >
+          {completedTasks.length > 0 ? (
+            completedTasks.map((task, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.3 }}
+                className="p-4 bg-purple-200 rounded-lg shadow-md flex justify-between items-center hover:shadow-xl hover:bg-purple-300 transition-all duration-300"
+              >
+                <span className="line-through text-purple-700 font-medium">
+                  {task.text}
+                </span>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-purple-500">{task.category}</span>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => restoreTask(index)}
+                    className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded shadow"
+                  >
+                    Restore
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => deleteTask(index)}
+                    className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded shadow"
+                  >
+                    Delete
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <motion.p
+              key="empty-completed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-purple-500 italic text-center"
+            >
+              No completed tasks yet
+            </motion.p>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
-};
-
-export default CompletedTasks;
+}
