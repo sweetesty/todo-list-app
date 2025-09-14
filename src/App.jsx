@@ -137,12 +137,12 @@ function AppContent() {
     </div>
   );
 }
-
-
 export default function App() {
   return (
-    <Router basename="/todo-list-app">
+    <Router>
       <AppContent />
     </Router>
   );
 }
+
+
