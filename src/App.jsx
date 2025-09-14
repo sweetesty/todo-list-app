@@ -43,6 +43,7 @@ function Navbar({ userName }) {
 function AppContent() {
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState("");
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
 
   
@@ -51,6 +52,7 @@ function AppContent() {
     if (savedUser) {
       setUserId(savedUser.id);
       setUserName(savedUser.name);
+       setLoading(false); 
     }
   }, []);
 
