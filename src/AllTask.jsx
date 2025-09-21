@@ -1,31 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function AllTasks({ userId }) {
-  const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
-  const currentUserId = userId || storedUser?.id;
+const API_URL = "http://localhost:3001/tasks";
 
+export default function AllTasks({ userId }) {
   const [tasks, setTasks] = useState([]);
   const [activeCategory, setActiveCategory] = useState("General");
-  const key = `tasks_${currentUserId}`;
-
-  const loadTasks = () => {
-    const storedTasks = JSON.parse(localStorage.getItem(key)) || [];
-    setTasks(storedTasks);
-  };
-
-  const saveTasks = (updated) => {
-    setTasks(updated);
-    localStorage.setItem(key, JSON.stringify(updated));
-  };
-
-  useEffect(() => {
-    if (!currentUserId) return;
-    loadTasks();
-    const handleStorageChange = () => loadTasks();
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [currentUserId]);
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
   const categories = [
     { name: "General", icon: "📋" },
@@ -36,21 +18,71 @@ export default function AllTasks({ userId }) {
     { name: "Fun", icon: "🎉" },
   ];
 
+  // 🔹 Load tasks from backend
+  const loadTasks = async () => {
+    const res = await fetch(`${API_URL}/${userId}`);
+    const data = await res.json();
+    setTasks(data);
+  };
+
+  useEffect(() => {
+    if (userId) {
+      loadTasks();
+    }
+
+    // 👂 Listen for tasksUpdated event from AddTask.jsx
+    const handler = () => loadTasks();
+    window.addEventListener("tasksUpdated", handler);
+
+    return () => {
+      window.removeEventListener("tasksUpdated", handler);
+    };
+  }, [userId]);
+
+  // 🔹 Toggle task completion
+  const toggleCompleted = async (id, completed) => {
+    await fetch(`${API_URL}/${userId}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed }),
+    });
+    loadTasks();
+  };
+
+  // 🔹 Delete task
+  const deleteTask = async (id) => {
+    await fetch(`${API_URL}/${userId}/${id}`, { method: "DELETE" });
+    loadTasks();
+  };
+
+  // 🔹 Edit task
+  const startEdit = (task) => {
+    setEditingId(task.id);
+    setEditingText(task.text);
+  };
+
+  const saveEdit = async (id) => {
+    if (!editingText.trim()) return;
+    await fetch(`${API_URL}/${userId}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: editingText }),
+    });
+    setEditingId(null);
+    setEditingText("");
+    loadTasks();
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingText("");
+  };
+
+  // 🔹 Filter by category
   const filteredTasks =
     activeCategory === "General"
       ? tasks
       : tasks.filter((task) => task.category === activeCategory);
-
-  const toggleDone = (index) => {
-    const updated = [...tasks];
-    updated[index].done = !updated[index].done;
-    saveTasks(updated);
-  };
-
-  const deleteTask = (index) => {
-    const updated = tasks.filter((_, i) => i !== index);
-    saveTasks(updated);
-  };
 
   return (
     <div className="w-full min-h-screen px-4 py-6 md:px-6 lg:px-8 bg-gradient-to-br from-purple-100 via-purple-200 to-purple-300 flex flex-col items-center">
@@ -58,6 +90,7 @@ export default function AllTasks({ userId }) {
         All Tasks
       </h2>
 
+      {/* Categories */}
       <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 w-full max-w-4xl">
         {categories.map((category) => (
           <motion.button
@@ -77,50 +110,94 @@ export default function AllTasks({ userId }) {
         ))}
       </div>
 
+      {/* Task list */}
       <AnimatePresence>
         {filteredTasks.length > 0 ? (
           <div className="flex flex-col gap-4 w-full max-w-4xl">
-            {filteredTasks.map((task, index) => (
+            {filteredTasks.map((task) => (
               <motion.div
-                key={index}
+                key={task.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 100, transition: { duration: 0.3 } }}
                 transition={{ duration: 0.3 }}
-                className={`flex flex-col md:flex-row md:justify-between items-start md:items-center p-4 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 w-full bg-purple-200 hover:bg-purple-300`}
+                className="flex flex-col md:flex-row md:justify-between items-start md:items-center p-4 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 w-full bg-purple-200 hover:bg-purple-300"
               >
                 <div className="flex items-center gap-3 mb-2 md:mb-0 flex-1">
                   <input
                     type="checkbox"
-                    checked={task.done}
-                    onChange={() => toggleDone(index)}
+                    checked={task.completed}
+                    onChange={() => toggleCompleted(task.id, !task.completed)}
                     className="w-5 h-5 text-purple-700 accent-purple-700"
                   />
-                  <span
-                    className={`font-medium break-words ${
-                      task.done ? "text-purple-500 line-through" : "text-purple-700"
-                    }`}
-                  >
-                    {task.text}
-                  </span>
+                  {editingId === task.id ? (
+                    <input
+                      type="text"
+                      value={editingText}
+                      onChange={(e) => setEditingText(e.target.value)}
+                      className="flex-1 px-2 py-1 rounded border border-purple-400 focus:outline-none"
+                    />
+                  ) : (
+                    <span
+                      className={`font-medium break-words ${
+                        task.completed
+                          ? "text-purple-500 line-through"
+                          : "text-purple-700"
+                      }`}
+                    >
+                      {task.text}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 mt-2 md:mt-0">
                   <span
                     className={`text-sm ${
-                      task.done ? "text-purple-400" : "text-purple-500"
+                      task.completed ? "text-purple-400" : "text-purple-500"
                     }`}
                   >
                     {task.category}
                   </span>
-                  <motion.button
-                    onClick={() => deleteTask(index)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded shadow text-sm sm:text-base"
-                  >
-                    Delete
-                  </motion.button>
+
+                  {editingId === task.id ? (
+                    <>
+                      <motion.button
+                        onClick={() => saveEdit(task.id)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded shadow text-sm sm:text-base"
+                      >
+                        Save
+                      </motion.button>
+                      <motion.button
+                        onClick={cancelEdit}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-gray-400 hover:bg-gray-300 text-white px-3 py-1 rounded shadow text-sm sm:text-base"
+                      >
+                        Cancel
+                      </motion.button>
+                    </>
+                  ) : (
+                    <>
+                      <motion.button
+                        onClick={() => startEdit(task)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded shadow text-sm sm:text-base"
+                      >
+                        Edit
+                      </motion.button>
+                      <motion.button
+                        onClick={() => deleteTask(task.id)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1 rounded shadow text-sm sm:text-base"
+                      >
+                        Delete
+                      </motion.button>
+                    </>
+                  )}
                 </div>
               </motion.div>
             ))}

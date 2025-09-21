@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  BrowserRouter as Router,
+  HashRouter as Router,
   Routes,
   Route,
   useLocation,
@@ -17,7 +17,7 @@ import CompletedTasks from "./CompletedTask";
 import NotFound from "./NotFound";
 import Footer from "./Footer";
 
-
+// Navbar component
 function Navbar({ userName }) {
   return (
     <header className="bg-purple-700 text-white p-4 flex justify-between items-center">
@@ -39,24 +39,22 @@ function Navbar({ userName }) {
   );
 }
 
-
+// Main App content
 function AppContent() {
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState("");
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
 
-  
+  // Load user from localStorage
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (savedUser) {
       setUserId(savedUser.id);
       setUserName(savedUser.name);
-       setLoading(false); 
     }
   }, []);
 
-  
+  // Save user to localStorage
   useEffect(() => {
     if (userId) {
       localStorage.setItem(
@@ -68,22 +66,18 @@ function AppContent() {
     }
   }, [userId, userName]);
 
-  
+  // Hide navbar on login/signup/home
   const hideNavbar =
     location.pathname === "/" ||
     location.pathname === "/login" ||
     location.pathname === "/signup";
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       {!hideNavbar && <Navbar userName={userName} />}
-
       <main className="flex-grow p-4 md:p-8">
         <Routes>
-      
           <Route path="/" element={<HomePage />} />
-
-          
           <Route
             path="/login"
             element={
@@ -95,8 +89,6 @@ function AppContent() {
               />
             }
           />
-
-        
           <Route
             path="/signup"
             element={
@@ -109,7 +101,6 @@ function AppContent() {
             }
           />
 
-          
           {userId ? (
             <>
               <Route path="/all" element={<AllTasks userId={userId} />} />
@@ -121,7 +112,6 @@ function AppContent() {
             </>
           ) : (
             <>
-            
               <Route path="/all" element={<Navigate to="/login" replace />} />
               <Route path="/add" element={<Navigate to="/login" replace />} />
               <Route
@@ -131,7 +121,6 @@ function AppContent() {
             </>
           )}
 
-          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -139,6 +128,8 @@ function AppContent() {
     </div>
   );
 }
+
+// App wrapper with HashRouter
 export default function App() {
   return (
     <Router>
@@ -146,5 +137,3 @@ export default function App() {
     </Router>
   );
 }
-
-

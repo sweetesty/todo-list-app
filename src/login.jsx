@@ -11,12 +11,17 @@ export default function Login({ onLogin }) {
 
   const handleLogin = (e) => {
     e.preventDefault();
+
+    
     const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    
     const foundUser = users.find(
       (user) => user.email === email && user.password === password
     );
 
     if (foundUser) {
+      
       if (!foundUser.id) {
         foundUser.id = Date.now().toString();
         const updatedUsers = users.map((u) =>
@@ -25,21 +30,26 @@ export default function Login({ onLogin }) {
         localStorage.setItem("users", JSON.stringify(updatedUsers));
       }
 
+      
       const loggedInUser = {
         id: foundUser.id,
-        name: foundUser.name,
+        name: foundUser.name || "User",
         email: foundUser.email,
       };
       localStorage.setItem("loggedInUser", JSON.stringify(loggedInUser));
 
-      onLogin(loggedInUser);
-      setAlert({ type: "success", message: `Welcome, ${foundUser.name}!` });
+      
+      if (onLogin) onLogin(loggedInUser);
 
+  
+      setAlert({ type: "success", message: `✅ Welcome, ${loggedInUser.name}!` });
+
+      
       setTimeout(() => {
-        navigate("/all");
+        navigate("/all"); 
       }, 1200);
     } else {
-      setAlert({ type: "error", message: "Incorrect email or password!" });
+      setAlert({ type: "error", message: "❌ Incorrect email or password!" });
     }
   };
 
@@ -56,7 +66,7 @@ export default function Login({ onLogin }) {
 
         {alert && (
           <div
-            className={`p-3 mb-4 rounded ${
+            className={`p-3 mb-4 rounded text-center ${
               alert.type === "error"
                 ? "bg-red-200 text-red-800"
                 : "bg-green-200 text-green-800"
@@ -115,7 +125,10 @@ export default function Login({ onLogin }) {
 
         <p className="mt-4 text-center">
           Don&apos;t have an account?{" "}
-          <Link to="/signup" className="text-purple-700 font-bold hover:underline">
+          <Link
+            to="/signup"
+            className="text-purple-700 font-bold hover:underline"
+          >
             Sign Up
           </Link>
         </p>

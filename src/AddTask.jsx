@@ -6,16 +6,20 @@ function AddTask({ userId }) {
   const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
   const currentUserId = userId || storedUser?.id;
 
-  const storageKey = `tasks_${currentUserId}`;
   const [text, setText] = useState("");
   const [category, setCategory] = useState("General");
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!text.trim()) return;
-    const newTask = { text, category, done: false };
-    const existingTasks = JSON.parse(localStorage.getItem(storageKey)) || [];
-    const updatedTasks = [...existingTasks, newTask];
-    localStorage.setItem(storageKey, JSON.stringify(updatedTasks));
+
+    const newTask = { text, category, completed: false };
+
+    await fetch(`http://localhost:3001/tasks/${currentUserId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newTask),
+    });
+
     window.dispatchEvent(new Event("tasksUpdated"));
     setText("");
     setCategory("General");
