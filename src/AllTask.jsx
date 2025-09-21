@@ -18,7 +18,6 @@ export default function AllTasks({ userId }) {
     { name: "Fun", icon: "🎉" },
   ];
 
-  // 🔹 Load tasks from backend
   const loadTasks = async () => {
     const res = await fetch(`${API_URL}/${userId}`);
     const data = await res.json();
@@ -30,7 +29,7 @@ export default function AllTasks({ userId }) {
       loadTasks();
     }
 
-    // 👂 Listen for tasksUpdated event from AddTask.jsx
+    
     const handler = () => loadTasks();
     window.addEventListener("tasksUpdated", handler);
 
@@ -39,7 +38,7 @@ export default function AllTasks({ userId }) {
     };
   }, [userId]);
 
-  // 🔹 Toggle task completion
+  
   const toggleCompleted = async (id, completed) => {
     await fetch(`${API_URL}/${userId}/${id}`, {
       method: "PUT",
@@ -49,13 +48,12 @@ export default function AllTasks({ userId }) {
     loadTasks();
   };
 
-  // 🔹 Delete task
+  
   const deleteTask = async (id) => {
     await fetch(`${API_URL}/${userId}/${id}`, { method: "DELETE" });
     loadTasks();
   };
 
-  // 🔹 Edit task
   const startEdit = (task) => {
     setEditingId(task.id);
     setEditingText(task.text);
@@ -78,7 +76,7 @@ export default function AllTasks({ userId }) {
     setEditingText("");
   };
 
-  // 🔹 Filter by category
+  
   const filteredTasks =
     activeCategory === "General"
       ? tasks
@@ -90,7 +88,7 @@ export default function AllTasks({ userId }) {
         All Tasks
       </h2>
 
-      {/* Categories */}
+    
       <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 w-full max-w-4xl">
         {categories.map((category) => (
           <motion.button
@@ -110,7 +108,7 @@ export default function AllTasks({ userId }) {
         ))}
       </div>
 
-      {/* Task list */}
+      
       <AnimatePresence>
         {filteredTasks.length > 0 ? (
           <div className="flex flex-col gap-4 w-full max-w-4xl">

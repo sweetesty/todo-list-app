@@ -7,14 +7,14 @@ export default function CompletedTasks({ userId }) {
 
   const [tasks, setTasks] = useState([]);
 
-  // 🔹 Load tasks from backend
+
   const loadTasks = async () => {
     const res = await fetch(`http://localhost:3001/tasks/${currentUserId}`);
     const data = await res.json();
     setTasks(data);
   };
 
-  // 🔹 Save updates to backend
+
   const updateTask = async (taskId, updates) => {
     await fetch(`http://localhost:3001/tasks/${currentUserId}/${taskId}`, {
       method: "PUT",

@@ -17,7 +17,7 @@ import CompletedTasks from "./CompletedTask";
 import NotFound from "./NotFound";
 import Footer from "./Footer";
 
-// Navbar component
+
 function Navbar({ userName }) {
   return (
     <header className="bg-purple-700 text-white p-4 flex justify-between items-center">
@@ -39,13 +39,13 @@ function Navbar({ userName }) {
   );
 }
 
-// Main App content
+
 function AppContent() {
   const [userId, setUserId] = useState(null);
   const [userName, setUserName] = useState("");
   const location = useLocation();
 
-  // Load user from localStorage
+  
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("currentUser"));
     if (savedUser) {
@@ -54,7 +54,7 @@ function AppContent() {
     }
   }, []);
 
-  // Save user to localStorage
+  
   useEffect(() => {
     if (userId) {
       localStorage.setItem(
@@ -66,7 +66,7 @@ function AppContent() {
     }
   }, [userId, userName]);
 
-  // Hide navbar on login/signup/home
+  
   const hideNavbar =
     location.pathname === "/" ||
     location.pathname === "/login" ||
@@ -129,7 +129,6 @@ function AppContent() {
   );
 }
 
-// App wrapper with HashRouter
 export default function App() {
   return (
     <Router>
