@@ -10,19 +10,31 @@ function AddTask({ userId }) {
   const [category, setCategory] = useState("General");
 
   const addTask = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentUserId) return;
 
-    const newTask = { text, category, completed: false };
+    const newTask = {
+      text,
+      category,
+      completed: false,
+      userId: currentUserId, // ✅ attach userId
+    };
 
-    await fetch(`http://localhost:3001/tasks/${currentUserId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newTask),
-    });
+    try {
+      await fetch(`http://localhost:3001/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTask),
+      });
 
-    window.dispatchEvent(new Event("tasksUpdated"));
-    setText("");
-    setCategory("General");
+      // Let AllTasks.jsx know we added something
+      window.dispatchEvent(new Event("tasksUpdated"));
+
+      // Reset form
+      setText("");
+      setCategory("General");
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
   };
 
   return (
